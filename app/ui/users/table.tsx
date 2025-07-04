@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { fetchFilteredUsers } from '@/app/lib/data';
 import Pagination from '@/app/ui/users/pagination';
 import { ExpandUser } from '@/app/ui/users/buttons';
+import { IUsers } from '../../lib/interfaces/users';
 
 export default async function UsersTable({
   query,
@@ -15,17 +16,17 @@ export default async function UsersTable({
   query: string;
   limit: number;
   currentPage: number;
-  sortBy?: string;
+  sortBy?: keyof IUsers;
   sortOrder?: 'asc' | 'desc' | '';
 }) {
-  const getNextSortOrder = (col: string) => {
+  const getNextSortOrder = (col: keyof IUsers) => {
     if (sortBy !== col) return 'asc';
     if (sortOrder === 'asc') return 'desc';
     if (sortOrder === 'desc') return '';
     return 'asc';
   };
 
-  const getSortLink = (col: string) => {
+  const getSortLink = (col: keyof IUsers) => {
     const nextOrder = getNextSortOrder(col);
     const params = new URLSearchParams({ query, page: String(currentPage), limit: String(limit) });
     if (nextOrder) {
@@ -42,7 +43,8 @@ export default async function UsersTable({
     return null;
   };
 
-  const { users, totalPages } = await fetchFilteredUsers(query, limit, currentPage, sortBy, sortOrder);
+  const validSortOrder = sortOrder === '' ? undefined : sortOrder;
+  const { users, totalPages } = await fetchFilteredUsers(query, limit, currentPage, sortBy, validSortOrder);
 
   return (
     <div className="mt-6 flow-root">
