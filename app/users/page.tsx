@@ -11,8 +11,10 @@ export const metadata: Metadata = {
   title: 'Users',
 };
 
-export default async function Page(props: {
-  searchParams?: Promise<{
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{
     query?: string;
     page?: string;
     limit?: string;
@@ -21,17 +23,14 @@ export default async function Page(props: {
     expandedId?: string;
   }>;
 }) {
-  const searchParams = await props.searchParams;
-  const query = searchParams?.query || '';
-  const currentPage = Number(searchParams?.page) || 1;
-  const limit = Number(searchParams?.limit) || 10;
+  const params = await searchParams;
+  const query = params?.query || '';
+  const currentPage = Number(params?.page) || 1;
+  const limit = Number(params?.limit) || 10;
 
-  const isIUsersKey = (key: any): key is keyof IUser =>
-    typeof key === 'string' && key in ({} as IUser);
-
-  const sortBy = isIUsersKey(searchParams?.sortBy) ? searchParams?.sortBy : undefined;
-  const sortOrder = searchParams?.sortOrder || undefined;
-  const expandedId = searchParams?.expandedId || '';
+  const sortBy = typeof params?.sortBy === 'string' ? params?.sortBy : undefined;
+  const sortOrder = params?.sortOrder || undefined;
+  const expandedId = params?.expandedId || '';
 
   return (
     <div className="w-full">

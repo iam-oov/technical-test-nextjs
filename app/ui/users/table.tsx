@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+
 import { fetchFilteredUsers } from '@/app/lib/data';
 import Pagination from '@/app/ui/users/pagination';
 import { ExpandUser, ViewUserDetails } from '@/app/ui/users/buttons';
@@ -16,7 +17,7 @@ export default async function UsersTable({
   query: string;
   limit: number;
   currentPage: number;
-  sortBy?: keyof IUser;
+  sortBy?: string;
   sortOrder?: 'asc' | 'desc' | '';
   expandedId?: string;
 }) {

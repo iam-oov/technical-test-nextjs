@@ -74,12 +74,17 @@ async function populateAllUsersCache(limit: number): Promise<void> {
 
 function sortUsers(
   users: IUser[],
-  sortBy: keyof IUser,
-  sortOrder: 'asc' | 'desc'
+  sortBy: keyof IUser | string,
+  sortOrder: string
 ): IUser[] {
   return users.slice().sort((a, b) => {
-    const aValue = (a[sortBy] ?? '').toString().toLowerCase();
-    const bValue = (b[sortBy] ?? '').toString().toLowerCase();
+    let aValue: string = '';
+    let bValue: string = '';
+
+    if (typeof sortBy === 'string' && sortBy in a && sortBy in b) {
+      aValue = (a[sortBy as keyof IUser] ?? '').toString().toLowerCase();
+      bValue = (b[sortBy as keyof IUser] ?? '').toString().toLowerCase();
+    }
 
     if (aValue < bValue) {
       return sortOrder === 'asc' ? -1 : 1;
@@ -95,8 +100,8 @@ export async function fetchFilteredUsers(
   query: string,
   limit: number,
   currentPage: number,
-  sortBy?: keyof IUser,
-  sortOrder?: 'asc' | 'desc'
+  sortBy?: string,
+  sortOrder?: string
 ): Promise<{ users: IUser[]; totalPages: number }> {
   const trimmedQuery = query.trim();
 
