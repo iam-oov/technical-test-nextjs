@@ -15,12 +15,16 @@ export default async function Page(props: {
     query?: string;
     page?: string;
     limit?: string;
+    sortBy?: string;
+    sortOrder?: 'asc' | 'desc' | '';
   }>;
 }) {
   const searchParams = await props.searchParams;
   const query = searchParams?.query || '';
   const currentPage = Number(searchParams?.page) || 1;
   const limit = Number(searchParams?.limit) || 10;
+  const sortBy = searchParams?.sortBy || undefined;
+  const sortOrder = searchParams?.sortOrder || undefined;
 
   return (
     <div className="w-full">
@@ -30,8 +34,14 @@ export default async function Page(props: {
       <div className="mt-4 flex items-center justify-between gap-2 md:mt-8">
         <Search placeholder="Search users..." />
       </div>
-      <Suspense key={query + currentPage} fallback={<UsersTableSkeleton />}>
-        <UsersTable query={query} limit={limit} currentPage={currentPage} />
+      <Suspense key={query + currentPage + sortBy + sortOrder} fallback={<UsersTableSkeleton />}>
+        <UsersTable
+          query={query}
+          limit={limit}
+          currentPage={currentPage}
+          sortBy={sortBy}
+          sortOrder={sortOrder}
+        />
       </Suspense>
     </div>
   );

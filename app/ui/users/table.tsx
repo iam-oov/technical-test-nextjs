@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import Link from 'next/link';
 
 import { fetchFilteredUsers } from '@/app/lib/data';
 import Pagination from '@/app/ui/users/pagination';
@@ -8,12 +9,40 @@ export default async function UsersTable({
   query,
   limit,
   currentPage,
+  sortBy,
+  sortOrder,
 }: {
   query: string;
   limit: number;
   currentPage: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc' | '';
 }) {
-  const { users, totalPages } = await fetchFilteredUsers(query, limit, currentPage);
+  const getNextSortOrder = (col: string) => {
+    if (sortBy !== col) return 'asc';
+    if (sortOrder === 'asc') return 'desc';
+    if (sortOrder === 'desc') return '';
+    return 'asc';
+  };
+
+  const getSortLink = (col: string) => {
+    const nextOrder = getNextSortOrder(col);
+    const params = new URLSearchParams({ query, page: String(currentPage), limit: String(limit) });
+    if (nextOrder) {
+      params.set('sortBy', col);
+      params.set('sortOrder', nextOrder);
+    }
+    return `?${params.toString()}`;
+  };
+
+  const getSortIndicator = (col: string) => {
+    if (sortBy !== col) return null;
+    if (sortOrder === 'asc') return ' ▲';
+    if (sortOrder === 'desc') return ' ▼';
+    return null;
+  };
+
+  const { users, totalPages } = await fetchFilteredUsers(query, limit, currentPage, sortBy, sortOrder);
 
   return (
     <div className="mt-6 flow-root">
@@ -61,16 +90,24 @@ export default async function UsersTable({
             <thead className="rounded-lg text-left text-sm font-normal">
               <tr>
                 <th scope="col" className="px-4 py-5 font-medium sm:pl-6">
-                  Name
+                  <Link href={getSortLink('name')} scroll={false} className="hover:underline">
+                    Name{getSortIndicator('name')}
+                  </Link>
                 </th>
                 <th scope="col" className="px-3 py-5 font-medium">
-                  Email
+                  <Link href={getSortLink('email')} scroll={false} className="hover:underline">
+                    Email{getSortIndicator('email')}
+                  </Link>
                 </th>
                 <th scope="col" className="px-3 py-5 font-medium">
-                  Phone
+                  <Link href={getSortLink('phone')} scroll={false} className="hover:underline">
+                    Phone{getSortIndicator('phone')}
+                  </Link>
                 </th>
                 <th scope="col" className="px-3 py-5 font-medium">
-                  City
+                  <Link href={getSortLink('city')} scroll={false} className="hover:underline">
+                    City{getSortIndicator('city')}
+                  </Link>
                 </th>
                 <th scope="col" className="relative py-3 pl-6 pr-3">
                   <span className="sr-only">Edit</span>
