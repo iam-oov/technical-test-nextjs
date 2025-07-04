@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  nextjs-users:
+    build: .
+    container_name: nextjs-users
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./:/app
+    command: ['pnpm', 'dev']
+    environment:
+      - NODE_ENV=development
