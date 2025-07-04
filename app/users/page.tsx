@@ -5,7 +5,6 @@ import { inter } from '@/app/ui/fonts';
 import { UsersTableSkeleton } from '@/app/ui/skeletons';
 import Search from '@/app/ui/search';
 import UsersTable from '@/app/ui/users/table';
-import { IUser } from '../lib/interfaces/user.interface';
 
 export const metadata: Metadata = {
   title: 'Users',
