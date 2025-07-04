@@ -1,10 +1,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
-
 import { fetchFilteredUsers } from '@/app/lib/data';
 import Pagination from '@/app/ui/users/pagination';
-import { ExpandUser } from '@/app/ui/users/buttons';
-import { IUsers } from '../../lib/interfaces/users';
+import { ExpandUser, ViewUserDetails } from '@/app/ui/users/buttons';
+import { IUser } from '../../lib/interfaces/user.interface';
 
 export default async function UsersTable({
   query,
@@ -12,21 +11,23 @@ export default async function UsersTable({
   currentPage,
   sortBy,
   sortOrder,
+  expandedId = '',
 }: {
   query: string;
   limit: number;
   currentPage: number;
-  sortBy?: keyof IUsers;
+  sortBy?: keyof IUser;
   sortOrder?: 'asc' | 'desc' | '';
+  expandedId?: string;
 }) {
-  const getNextSortOrder = (col: keyof IUsers) => {
+  const getNextSortOrder = (col: keyof IUser) => {
     if (sortBy !== col) return 'asc';
     if (sortOrder === 'asc') return 'desc';
     if (sortOrder === 'desc') return '';
     return 'asc';
   };
 
-  const getSortLink = (col: keyof IUsers) => {
+  const getSortLink = (col: keyof IUser) => {
     const nextOrder = getNextSortOrder(col);
     const params = new URLSearchParams({ query, page: String(currentPage), limit: String(limit) });
     if (nextOrder) {
@@ -83,6 +84,15 @@ export default async function UsersTable({
                     <ExpandUser id={user.id} />
                   </div>
                 </div>
+                {expandedId === user.id && (
+                  <div className="mt-2 rounded bg-gray-100 p-2 text-xs text-gray-700">
+                    <strong>ID:</strong> {user.id}
+                    <br />
+                    <strong>Location:</strong> {user.location.street}, {user.location.city}, {user.location.state}, {user.location.country}, {user.location.postcode}
+                    <br />
+                    <strong>Coordinates:</strong> {user.location.coordinates.latitude}, {user.location.coordinates.longitude}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -117,7 +127,7 @@ export default async function UsersTable({
               </tr>
             </thead>
             <tbody className="bg-white">
-              {users?.map((user) => (
+              {users?.map((user) => [
                 <tr
                   key={user.id}
                   className="w-full border-b py-3 text-sm last-of-type:border-none [&:first-child>td:first-child]:rounded-tl-lg [&:first-child>td:last-child]:rounded-tr-lg [&:last-child>td:first-child]:rounded-bl-lg [&:last-child>td:last-child]:rounded-br-lg"
@@ -146,10 +156,22 @@ export default async function UsersTable({
                   <td className="whitespace-nowrap py-3 pl-6 pr-3">
                     <div className="flex justify-end gap-3">
                       <ExpandUser id={user.id} />
+                      <ViewUserDetails id={user.id} page={currentPage} limit={limit} />
                     </div>
                   </td>
-                </tr>
-              ))}
+                </tr>,
+                expandedId === user.id && (
+                  <tr key={user.id + '-expanded'}>
+                    <td colSpan={5} className="bg-gray-100 px-6 py-2 text-xs text-gray-700">
+                      <strong>ID:</strong> {user.id}
+                      <br />
+                      <strong>Location:</strong> {user.location.street}, {user.location.city}, {user.location.state}, {user.location.country}, {user.location.postcode}
+                      <br />
+                      <strong>Coordinates:</strong> {user.location.coordinates.latitude}, {user.location.coordinates.longitude}
+                    </td>
+                  </tr>
+                )
+              ])}
             </tbody>
           </table>
 

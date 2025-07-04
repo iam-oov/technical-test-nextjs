@@ -5,6 +5,7 @@ import { inter } from '@/app/ui/fonts';
 import { UsersTableSkeleton } from '@/app/ui/skeletons';
 import Search from '@/app/ui/search';
 import UsersTable from '@/app/ui/users/table';
+import { IUser } from '../lib/interfaces/user.interface';
 
 export const metadata: Metadata = {
   title: 'Users',
@@ -17,14 +18,20 @@ export default async function Page(props: {
     limit?: string;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc' | '';
+    expandedId?: string;
   }>;
 }) {
   const searchParams = await props.searchParams;
   const query = searchParams?.query || '';
   const currentPage = Number(searchParams?.page) || 1;
   const limit = Number(searchParams?.limit) || 10;
-  const sortBy = searchParams?.sortBy || undefined;
+
+  const isIUsersKey = (key: any): key is keyof IUser =>
+    typeof key === 'string' && key in ({} as IUser);
+
+  const sortBy = isIUsersKey(searchParams?.sortBy) ? searchParams?.sortBy : undefined;
   const sortOrder = searchParams?.sortOrder || undefined;
+  const expandedId = searchParams?.expandedId || '';
 
   return (
     <div className="w-full">
@@ -41,6 +48,7 @@ export default async function Page(props: {
           currentPage={currentPage}
           sortBy={sortBy}
           sortOrder={sortOrder}
+          expandedId={expandedId}
         />
       </Suspense>
     </div>

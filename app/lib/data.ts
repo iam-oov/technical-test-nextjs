@@ -1,5 +1,5 @@
-import { IResponse } from './interfaces/api-response';
-import { IUsers } from './interfaces/users';
+import { IResponse } from './interfaces/api-response.interface';
+import { IUser } from './interfaces/user.interface';
 
 const API_CONFIG = {
   BASE_URL: 'https://randomuser.me/api/',
@@ -7,7 +7,11 @@ const API_CONFIG = {
   TOTAL_USERS_TO_FETCH: 1000,
 };
 
-async function fetchUsersPage(page: number, limit: number): Promise<IUsers[]> {
+async function fetchUsersPage(
+  page: number,
+  limit: number,
+  raw?: boolean
+): Promise<IUser[] | IResponse['results']> {
   const url = `${API_CONFIG.BASE_URL}?results=${limit}&page=${page}&seed=${API_CONFIG.SEED}`;
   try {
     const response = await fetch(url);
@@ -18,6 +22,10 @@ async function fetchUsersPage(page: number, limit: number): Promise<IUsers[]> {
     }
     const data: IResponse = await response.json();
 
+    if (raw) {
+      return data.results;
+    }
+
     return data.results.map((user) => ({
       id: user.login.uuid,
       name: `${user.name.first} ${user.name.last}`,
@@ -25,6 +33,17 @@ async function fetchUsersPage(page: number, limit: number): Promise<IUsers[]> {
       image_url: user.picture.thumbnail,
       phone: user.phone,
       city: user.location.city,
+      location: {
+        street: user.location.street.name,
+        city: user.location.city,
+        state: user.location.state,
+        country: user.location.country,
+        postcode: user.location.postcode,
+        coordinates: {
+          latitude: user.location.coordinates.latitude,
+          longitude: user.location.coordinates.longitude,
+        },
+      },
     }));
   } catch (error) {
     console.error(`Failed to fetch page ${page}:`, error);
@@ -32,14 +51,14 @@ async function fetchUsersPage(page: number, limit: number): Promise<IUsers[]> {
   }
 }
 
-let allCachedUsers: IUsers[] = [];
+let allCachedUsers: IUser[] = [];
 async function populateAllUsersCache(limit: number): Promise<void> {
   if (allCachedUsers.length === 0) {
     const totalPages = Math.ceil(API_CONFIG.TOTAL_USERS_TO_FETCH / limit);
-    const fetchPromises: Promise<IUsers[]>[] = [];
+    const fetchPromises: Promise<IUser[]>[] = [];
 
     for (let page = 1; page <= totalPages; page++) {
-      fetchPromises.push(fetchUsersPage(page, limit));
+      fetchPromises.push(fetchUsersPage(page, limit) as Promise<IUser[]>);
     }
 
     try {
@@ -54,10 +73,10 @@ async function populateAllUsersCache(limit: number): Promise<void> {
 }
 
 function sortUsers(
-  users: IUsers[],
-  sortBy: keyof IUsers,
+  users: IUser[],
+  sortBy: keyof IUser,
   sortOrder: 'asc' | 'desc'
-): IUsers[] {
+): IUser[] {
   return users.slice().sort((a, b) => {
     const aValue = (a[sortBy] ?? '').toString().toLowerCase();
     const bValue = (b[sortBy] ?? '').toString().toLowerCase();
@@ -76,12 +95,12 @@ export async function fetchFilteredUsers(
   query: string,
   limit: number,
   currentPage: number,
-  sortBy?: keyof IUsers,
+  sortBy?: keyof IUser,
   sortOrder?: 'asc' | 'desc'
-): Promise<{ users: IUsers[]; totalPages: number }> {
+): Promise<{ users: IUser[]; totalPages: number }> {
   const trimmedQuery = query.trim();
 
-  let usersToProcess: IUsers[] = [];
+  let usersToProcess: IUser[] = [];
   let totalUsersCount: number = 0;
 
   if (trimmedQuery !== '' || sortBy || sortOrder) {
@@ -100,7 +119,7 @@ export async function fetchFilteredUsers(
     totalUsersCount = usersToProcess.length;
   } else {
     // if no query, fetch only the current page from the API.
-    usersToProcess = await fetchUsersPage(currentPage, limit);
+    usersToProcess = (await fetchUsersPage(currentPage, limit)) as IUser[];
     totalUsersCount = API_CONFIG.TOTAL_USERS_TO_FETCH; // Assuming this is the total for no query
   }
 
@@ -118,4 +137,14 @@ export async function fetchFilteredUsers(
     users: paginatedUsers,
     totalPages,
   };
+}
+
+export async function fetchUserById(id: string, page: number, limit: number) {
+  const results = (await fetchUsersPage(
+    page,
+    limit,
+    true
+  )) as IResponse['results'];
+  const user = results.find((user) => user.login.uuid === id) || null;
+  return user;
 }
